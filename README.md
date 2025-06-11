@@ -1,144 +1,134 @@
-# Sistem Point of Sale (POS) & Inventaris Toko Olahraga
+<h1 align="center">🚀 Sistem POS & Inventaris Toko Olahraga 🚀</h1>
 
-![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel)
-![Livewire](https://img.shields.io/badge/Livewire-3.x-4E57E8?style=for-the-badge&logo=livewire)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=for-the-badge&logo=tailwindcss)
-![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php)
+<p align="center">
+  <strong>Kelola Bisnis Toko Olahraga Anda dengan Cerdas, Efisien, dan Modern!</strong><br>
+  Dibangun dengan ❤️ oleh Wahyu.
+</p>
 
-Sistem ini adalah aplikasi web berbasis Laravel yang dirancang untuk mengelola operasional toko olahraga dengan multi-cabang. Aplikasi ini mencakup sistem kasir (Point of Sale), manajemen inventaris, manajemen pengguna, pelaporan keuangan, hingga peramalan permintaan barang.
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=for-the-badge&logo=laravel" alt="Laravel 11">
+  <img src="https://img.shields.io/badge/Livewire-✓-FB70A9?style=for-the-badge&logo=livewire" alt="Livewire">
+  <img src="https://img.shields.io/badge/Jetstream-✓-14B8A6?style=for-the-badge" alt="Jetstream">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-✓-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=for-the-badge&logo=php" alt="PHP 8.2+">
+</p>
 
-## 📖 Tentang Proyek
+## 👋 Selamat Datang di Sistem POS & Inventaris Toko Olahraga!
 
-Proyek ini dibangun untuk mengatasi kebutuhan manajemen toko olahraga yang memiliki pusat dan beberapa cabang. Dengan aplikasi ini, admin pusat dapat memonitor seluruh aktivitas bisnis dari semua cabang, sementara setiap cabang dapat mengelola operasionalnya secara mandiri namun tetap terintegrasi dengan pusat.
+Pernahkah Anda kesulitan mengelola operasional toko olahraga yang memiliki banyak cabang? Sistem ini hadir sebagai solusi! Aplikasi web inovatif ini dirancang khusus untuk bisnis retail olahraga yang ingin memodernisasi cara mereka mengelola penjualan, inventaris, dan keuangan secara terpusat. Lupakan kerumitan pencatatan manual dan sambut era digital manajemen bisnis yang terintegrasi dan mudah diakses.
 
-### Dibangun Dengan
+Sistem ini memberdayakan **Admin Pusat** dengan alat komprehensif untuk memonitor, dan mengelola seluruh cabang. Di sisi lain, setiap **Cabang** mendapatkan kemudahan untuk mengelola operasionalnya sendiri, mulai dari transaksi kasir hingga stok barang, yang semuanya terhubung secara real-time ke pusat.
 
-Berikut adalah daftar teknologi utama yang digunakan dalam pengembangan proyek ini:
+✨ **Catatan:** Untuk pengalaman pengguna terbaik dan akses ke semua fitur manajemen yang kaya, kami sangat merekomendasikan penggunaan sistem ini pada perangkat desktop.
 
--   [Laravel](https://laravel.com/) - Framework PHP
--   [Livewire](https://livewire.laravel.com/) - Framework full-stack untuk antarmuka dinamis
--   [Jetstream](https://jetstream.laravel.com/) - Scaffolding Autentikasi
--   [Tailwind CSS](https://tailwindcss.com/) - Framework CSS
--   [Alpine.js](https://alpinejs.dev/) - Framework JavaScript minimalis
--   [MySQL](https://www.mysql.com/) - Database
+## 🌟 Fitur Unggulan yang Membuat Perbedaan
 
-## ✨ Fitur Utama
+Sistem ini dikemas dengan fitur-fitur canggih untuk memaksimalkan efisiensi bisnis Anda, dibagi berdasarkan peran:
 
-Aplikasi ini memiliki beragam fitur yang terbagi berdasarkan peran pengguna:
+### 👨‍💼 Untuk Admin & Manajer Pusat:
 
--   **👨‍💼 Admin Pusat:**
+-   📊 **Dashboard Monitoring Terpusat:** Pantau denyut nadi seluruh bisnis Anda! Statistik kunci dari semua cabang dalam satu tampilan dinamis.
+-   📦 **Manajemen Produk & Stok Pusat:** Kendalikan setiap produk! CRUD lengkap untuk produk dan kelola stok di gudang pusat.
+-   🚚 **Manajemen Pembelian ke Supplier:** Proses pembelian barang dari supplier tercatat dengan rapi.
+-   💰 **Laporan Keuangan Konsolidasi:** Dapatkan gambaran keuangan keseluruhan dari semua cabang.
+-   📈 **Peramalan Permintaan (Demand Forecasting):** Buat keputusan bisnis yang lebih baik dengan fitur peramalan permintaan produk.
+-   👤 **Kontrol Pengguna Terpusat:** Kelola semua akun pengguna di seluruh cabang dan peran.
 
-    -   Dashboard monitoring pusat
-    -   Manajemen Produk (CRUD)
-    -   Manajemen Stok Pusat
-    -   Manajemen Pengguna (Semua Role)
-    -   Manajemen Pembelian ke Supplier
-    -   Laporan Keuangan Keseluruhan
-    -   Peramalan Permintaan (Demand Forecasting)
+### 🏢 Untuk Admin & Manajer Cabang:
 
--   **🧑‍✈️ Manajer Pusat:**
+-   🏠 **Dashboard Cabang Personal:** Lihat ringkasan penjualan dan stok untuk cabang Anda.
+-   🗂️ **Manajemen Stok Cabang:** Kelola penerimaan dan pengeluaran barang di cabang Anda dengan mudah.
+-   💸 **Laporan Keuangan Cabang:** Pantau performa keuangan cabang Anda secara spesifik.
+-   👤 **Manajemen Pengguna Cabang:** Kelola akun untuk kasir di cabang Anda.
 
-    -   Dashboard monitoring pusat
-    -   Melihat Stok Pusat & Cabang
-    -   Melihat Hasil Peramalan
+### 🛒 Untuk Kasir:
 
--   **🏢 Admin Cabang:**
+-   🖥️ **Antarmuka Point of Sale (POS) Modern:** Lakukan transaksi penjualan dengan cepat, mudah, dan intuitif.
+-   🧾 **Pencatatan Transaksi Real-time:** Setiap transaksi yang Anda buat akan langsung tercatat di sistem pusat dan cabang.
 
-    -   Dashboard monitoring cabang
-    -   Manajemen Stok Cabang (Penerimaan & Pengeluaran)
-    -   Manajemen Pengguna di Cabangnya (Kasir)
+## 🛠️ Dibangun Dengan Teknologi Terkini
 
--   **📈 Manajer Cabang:**
+Sistem ini memanfaatkan kekuatan teknologi web modern untuk performa dan pengalaman pengguna terbaik:
 
-    -   Dashboard monitoring cabang
-    -   Melihat Stok Cabang
-    -   Melihat Laporan Keuangan Cabang
-    -   Melihat Hasil Peramalan untuk Cabangnya
+-   **Framework Backend:** Laravel 11 (Kecepatan, Keamanan, Skalabilitas)
+-   **Framework Frontend Dinamis:** Livewire (Interaktivitas Real-time Tanpa Reload Halaman)
+-   **Scaffolding Autentikasi & UI:** Laravel Jetstream (Stack Livewire - Fondasi Kuat)
+-   **Styling:** Tailwind CSS (Desain Utility-First yang Elegan dan Responsif)
+-   **Database:** MySQL (Fleksibel untuk database relasional lain yang didukung Laravel)
+-   **Web Server:** Apache/Nginx (atau `php artisan serve` untuk development kilat)
+-   **PHP:** Versi 8.2+
+-   **Manajemen Dependensi:** Composer (PHP), NPM (JavaScript)
 
--   **🛒 Kasir:**
-    -   Antarmuka Point of Sale (POS) untuk transaksi penjualan
+## 🚀 Siap Memulai? Panduan Instalasi Cepat
 
-## 🚀 Panduan Instalasi
+Ikuti langkah-langkah ini untuk menjalankan sistem di lingkungan lokal Anda:
 
-Untuk menjalankan proyek ini di lingkungan lokal, ikuti langkah-langkah berikut.
+1.  **Clone Repositori Ini:**
+    `bash
+    git clone [https://github.com/wahyu2021/toko-olahraga-pos.git](https://github.com/wahyu2021/toko-olahraga-pos.git)
+    cd toko-olahraga-pos
+    `
 
-### Prasyarat
+2.  **Instal Dependensi PHP:**
+    `bash
+    composer install
+    `
 
-Pastikan perangkat Anda telah terinstal:
+3.  **Persiapkan File Environment Anda:**
+    Salin `.env.example` menjadi `.env`:
+    `bash
+    cp .env.example .env
+    `
 
--   PHP (versi ^8.2)
--   Composer
--   Node.js & NPM
--   Database (misalnya MySQL, MariaDB)
+4.  **Generate Kunci Aplikasi:**
+    `bash
+    php artisan key:generate
+    `
 
-### Langkah-langkah Instalasi
+5.  **Atur Koneksi ke Database Anda (di file `.env`):**
+    ```env
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=db_toko_olahraga # Sesuaikan!
+    DB_USERNAME=root      # Sesuaikan!
+    DB_PASSWORD=          # Sesuaikan!
 
-1.  **Clone Repositori**
+APP_URL=http://localhost:8000 # Penting untuk URL yang benar!
+    ```
 
-    ```sh
-    git clone [https://github.com/wahyu2021/toko-olahraga-pos.git](https://github.com/wahyu2021/toko-olahraga-pos.git)
-    cd toko-olahraga-pos
-    ```
+6.  **Bangun Struktur Data Anda (Migrasi & Seeder):**
+    `bash
+    php artisan migrate --seed
+    `
+    _(Seeder akan mengisi data awal untuk peran, pengguna, produk, cabang, dll.)_
 
-2.  **Install Dependensi PHP**
+7.  **Pasang Aset Frontend:**
+    `bash
+    npm install && npm run dev
+    `
+    _(Untuk produksi: `npm run build`)_
 
-    ```sh
-    composer install
-    ```
+8.  **Aktifkan Link Penyimpanan (Storage Link):**
+    `bash
+    php artisan storage:link
+    `
 
-3.  **Install Dependensi JavaScript**
+9.  **Nyalakan Servernya! (Development Server):**
+    `bash
+    php artisan serve
+    `
+    🎉 Aplikasi Anda siap di `http://localhost:8000`! 🎉
 
-    ```sh
-    npm install
-    ```
+## 💡 Cara Menggunakan
 
-4.  **Konfigurasi Lingkungan**
-    Buat file `.env` dengan menyalin dari `.env.example`.
+Setelah setup berhasil:
 
-    ```sh
-    cp .env.example .env
-    ```
-
-    Kemudian, generate kunci aplikasi.
-
-    ```sh
-    php artisan key:generate
-    ```
-
-5.  **Konfigurasi Database**
-    Buka file `.env` dan sesuaikan konfigurasi database Anda.
-
-    ```env
-    DB_CONNECTION=mysql
-    DB_HOST=127.0.0.1
-    DB_PORT=3306
-    DB_DATABASE=nama_database_anda
-    DB_USERNAME=user_database_anda
-    DB_PASSWORD=password_database_anda
-    ```
-
-6.  **Jalankan Migrasi & Seeder**
-    Migrasi akan membuat struktur tabel, dan seeder akan mengisi data awal (termasuk data user, produk, cabang, dll).
-
-    ```sh
-    php artisan migrate --seed
-    ```
-
-7.  **Build Aset Frontend**
-
-    ```sh
-    npm run dev
-    ```
-
-8.  **Jalankan Server Pengembangan**
-    ```sh
-    php artisan serve
-    ```
-    Aplikasi sekarang dapat diakses di `http://127.0.0.1:8000`.
-
-## 👤 Akun Pengguna
-
-Setelah menjalankan `seeder`, Anda dapat login menggunakan akun default berikut. Password untuk semua akun adalah `password`.
+-   Buka aplikasi di browser Anda (`http://localhost:8000`).
+-   **Login Akun:**
+    -   🔒 Ingat! Akun default dibuat oleh Seeder.
+    -   Password untuk semua akun adalah: `password`
+    -   **Contoh Akun (dari Seeder):**
 
 | Peran                | Email                        |
 | -------------------- | ---------------------------- |
@@ -151,6 +141,6 @@ Setelah menjalankan `seeder`, Anda dapat login menggunakan akun default berikut.
 | **Manajer Cabang 2** | `manajercabang2@example.com` |
 | **Kasir Cabang 2**   | `kasir2@example.com`         |
 
----
+## 🙏 Ucapan Terima Kasih
 
-Dibuat dengan ❤️ oleh Wahyu
+Proyek ini merupakan hasil karya dan dedikasi oleh **Wahyu**.
