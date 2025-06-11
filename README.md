@@ -1,16 +1,16 @@
 <h1 align="center">🚀 Sistem POS & Inventaris Toko Olahraga 🚀</h1>
 
 <p align="center">
-  <strong>Kelola Bisnis Toko Olahraga Anda dengan Cerdas, Efisien, dan Modern!</strong><br>
-  Dibangun dengan ❤️ oleh Wahyu.
+  <strong>Kelola Bisnis Toko Olahraga Anda dengan Cerdas, Efisien, dan Modern!</strong><br>
+  Dibangun dengan ❤️ oleh Wahyu.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=for-the-badge&logo=laravel" alt="Laravel 11">
-  <img src="https://img.shields.io/badge/Livewire-✓-FB70A9?style=for-the-badge&logo=livewire" alt="Livewire">
-  <img src="https://img.shields.io/badge/Jetstream-✓-14B8A6?style=for-the-badge" alt="Jetstream">
-  <img src="https://img.shields.io/badge/Tailwind_CSS-✓-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS">
-  <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=for-the-badge&logo=php" alt="PHP 8.2+">
+  <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=for-the-badge&logo=laravel" alt="Laravel 11">
+  <img src="https://img.shields.io/badge/Livewire-✓-FB70A9?style=for-the-badge&logo=livewire" alt="Livewire">
+  <img src="https://img.shields.io/badge/Jetstream-✓-14B8A6?style=for-the-badge" alt="Jetstream">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-✓-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=for-the-badge&logo=php" alt="PHP 8.2+">
 </p>
 
 ## 👋 Selamat Datang di Sistem POS & Inventaris Toko Olahraga!
@@ -63,62 +63,72 @@ Sistem ini memanfaatkan kekuatan teknologi web modern untuk performa dan pengala
 
 Ikuti langkah-langkah ini untuk menjalankan sistem di lingkungan lokal Anda:
 
-1.  **Clone Repositori Ini:**
-    `bash
-    git clone [https://github.com/wahyu2021/toko-olahraga-pos.git](https://github.com/wahyu2021/toko-olahraga-pos.git)
-    cd toko-olahraga-pos
-    `
+1.  **Clone Repositori Ini:**
 
-2.  **Instal Dependensi PHP:**
-    `bash
-    composer install
-    `
+    ```bash
+    git clone [https://github.com/wahyu2021/toko-olahraga-pos.git](https://github.com/wahyu2021/toko-olahraga-pos.git)
+    cd toko-olahraga-pos
+    ```
 
-3.  **Persiapkan File Environment Anda:**
-    Salin `.env.example` menjadi `.env`:
-    `bash
-    cp .env.example .env
-    `
+2.  **Instal Dependensi PHP:**
 
-4.  **Generate Kunci Aplikasi:**
-    `bash
-    php artisan key:generate
-    `
+    ```bash
+    composer install
+    ```
 
-5.  **Atur Koneksi ke Database Anda (di file `.env`):**
-    ```env
-    DB_CONNECTION=mysql
-    DB_HOST=127.0.0.1
-    DB_PORT=3306
-    DB_DATABASE=db_toko_olahraga # Sesuaikan!
-    DB_USERNAME=root      # Sesuaikan!
-    DB_PASSWORD=          # Sesuaikan!
+3.  **Persiapkan File Environment Anda:**
+    Salin `.env.example` menjadi `.env`:
 
-APP_URL=http://localhost:8000 # Penting untuk URL yang benar!
-    ```
+    ```bash
+    cp .env.example .env
+    ```
 
-6.  **Bangun Struktur Data Anda (Migrasi & Seeder):**
-    `bash
-    php artisan migrate --seed
-    `
-    _(Seeder akan mengisi data awal untuk peran, pengguna, produk, cabang, dll.)_
+4.  **Generate Kunci Aplikasi:**
 
-7.  **Pasang Aset Frontend:**
-    `bash
-    npm install && npm run dev
-    `
-    _(Untuk produksi: `npm run build`)_
+    ```bash
+    php artisan key:generate
+    ```
 
-8.  **Aktifkan Link Penyimpanan (Storage Link):**
-    `bash
-    php artisan storage:link
-    `
+5.  **Atur Koneksi ke Database Anda (di file `.env`):**
 
-9.  **Nyalakan Servernya! (Development Server):**
-    `bash
-    php artisan serve
-    `
-    🎉 Aplikasi Anda siap di `http://localhost:8000`! 🎉
+    ```env
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=db_toko_olahraga # Sesuaikan!
+    DB_USERNAME=root      # Sesuaikan!
+    DB_PASSWORD=          # Sesuaikan!
+
+    APP_URL=http://localhost:8000 # Penting untuk URL yang benar!
+    ```
+
+6.  **Bangun Struktur Data Anda (Migrasi & Seeder):**
+
+    ```bash
+    php artisan migrate --seed
+    ```
+
+    _(Seeder akan mengisi data awal untuk peran, pengguna, produk, cabang, dll.)_
+
+7.  **Pasang Aset Frontend:**
+
+    ```bash
+    npm install && npm run dev
+    ```
+
+    _(Untuk produksi: `npm run build`)_
+
+8.  **Aktifkan Link Penyimpanan (Storage Link):**
+
+    ```bash
+    php artisan storage:link
+    ```
+
+9.  **Nyalakan Servernya! (Development Server):**
+    ```bash
+    php artisan serve
+    ```
+    🎉 Aplikasi Anda siap di `http://localhost:8000`! 🎉
 
 ## 💡 Cara Menggunakan
 
