@@ -4,54 +4,39 @@ namespace App\Livewire\AdminCabang;
 
 use App\Models\Product;
 use App\Models\Stock;
-use App\Models\StockMovement;
+use App\Services\BranchStockService; // <-- Gunakan Service
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Exception;
 
 class BranchStockManagement extends Component
 {
     use WithPagination;
 
     // Properti Umum & Tabel
-    public $searchProduct = '';
+    public string $searchProduct = '';
     public $products;
     protected $paginationTheme = 'tailwind';
 
     // Properti untuk Fitur "Tambah Stok" (Transfer)
     public bool $showAddStockModal = false;
-    public $productId;
-    public $quantity;
-    public $addStockNotes = '';
+    public ?int $productId = null;
+    public ?int $quantity = null;
+    public string $addStockNotes = '';
     public ?int $maxQuantity = null;
 
     // Properti untuk Fitur "Penyesuaian Stok"
     public bool $showAdjustmentModal = false;
     public ?Stock $selectedStock = null;
-    public $adjustmentValue;
+    public ?int $adjustmentValue = null;
     public ?int $currentQuantity = null;
     public ?int $newQuantity = null;
     public string $adjustmentNotes = '';
 
-    protected $rules = [
-        'productId' => 'required|exists:products,id',
-        'quantity' => 'required|integer|min:1',
-        'addStockNotes' => 'nullable|string|max:255',
-        'adjustmentValue' => 'required|integer|not_in:0',
-        'adjustmentNotes' => 'required|string|max:255|min:5',
-    ];
-
-    protected $messages = [
-        'quantity.max' => 'Jumlah permintaan melebihi stok di pusat.',
-        'adjustmentValue.not_in' => 'Nilai penyesuaian tidak boleh nol.',
-        'adjustmentNotes.required' => 'Catatan atau alasan penyesuaian wajib diisi.',
-        'adjustmentNotes.min' => 'Catatan harus berisi minimal 5 karakter.',
-    ];
-
     public function mount()
     {
-        $this->products = Product::where('is_active', true)->orderBy('name')->get();
+        $this->products = Product::where('is_active', true)->orderBy('name')->get(['id', 'name', 'sku']);
     }
 
     public function render()
@@ -75,7 +60,8 @@ class BranchStockManagement extends Component
         ])->layout('layouts.admin-cabang');
     }
 
-    // METODE UNTUK FITUR "TAMBAH STOK" (TRANSFER)
+    // --- METODE UNTUK FITUR "TAMBAH STOK" (TRANSFER) ---
+
     public function openAddStockModal()
     {
         $this->resetErrorBag();
@@ -87,46 +73,42 @@ class BranchStockManagement extends Component
     {
         $this->quantity = null;
         if ($productId) {
-            $centralWarehouseBranchId = 1;
-            $stock = Stock::where('product_id', $productId)->where('branch_id', $centralWarehouseBranchId)->first();
+            $stock = Stock::where('product_id', $productId)->where('branch_id', 1)->first(); // Asumsi ID 1 adalah pusat
             $this->maxQuantity = $stock ? $stock->quantity : 0;
-            $this->rules['quantity'] = "required|integer|min:1|max:{$this->maxQuantity}";
         } else {
             $this->maxQuantity = null;
-            $this->rules['quantity'] = 'required|integer|min:1';
         }
     }
 
-    public function addStock()
+    public function addStock(BranchStockService $stockService)
     {
-        $this->validate(['productId', 'quantity', 'addStockNotes']);
+        $validatedData = $this->validate([
+            'productId' => 'required|exists:products,id',
+            'quantity' => "required|integer|min:1|max:{$this->maxQuantity}",
+            'addStockNotes' => 'nullable|string|max:255',
+        ], [
+            'quantity.max' => 'Jumlah permintaan melebihi stok di pusat.',
+        ]);
+
         try {
-            DB::transaction(function () {
-                $requestingBranchId = Auth::user()->branch_id;
-                $centralWarehouseBranchId = 1;
-                if (!$requestingBranchId || $requestingBranchId == $centralWarehouseBranchId) {
-                    throw new \Exception("Operasi tidak valid untuk cabang ini.");
-                }
-                $centralStock = Stock::where('product_id', $this->productId)->where('branch_id', $centralWarehouseBranchId)->lockForUpdate()->first();
-                if (!$centralStock || $centralStock->quantity < $this->quantity) {
-                    throw new \Exception("Stok di Gudang Pusat tidak mencukupi.");
-                }
-                $branchStock = Stock::firstOrCreate(['product_id' => $this->productId, 'branch_id' => $requestingBranchId], ['quantity' => 0]);
-                $centralStock->decrement('quantity', $this->quantity);
-                $this->createStockMovement($this->productId, $centralWarehouseBranchId, 'transfer_out', $this->quantity, "Transfer ke Cabang ID: {$requestingBranchId}. {$this->addStockNotes}");
-                $branchStock->increment('quantity', $this->quantity);
-                $this->createStockMovement($this->productId, $requestingBranchId, 'transfer_in', $this->quantity, "Transfer dari Gudang Pusat. {$this->addStockNotes}");
-            });
+            $stockService->requestStockTransfer(
+                $validatedData['productId'],
+                $validatedData['quantity'],
+                Auth::user()->branch_id,
+                $validatedData['addStockNotes']
+            );
+
             session()->flash('message', 'Stok berhasil ditransfer dari Gudang Pusat.');
             $this->closeModal();
-            $this->dispatch('stockUpdated');
-        } catch (\Exception $e) {
-            DB::rollBack();
+            $this->dispatch('stockUpdated'); // Tetap berguna jika ada komponen lain yang mendengarkan
+
+        } catch (Exception $e) {
             session()->flash('error', 'Gagal memproses transfer: ' . $e->getMessage());
         }
     }
 
-    // METODE UNTUK FITUR "PENYESUAIAN STOK"
+    // --- METODE UNTUK FITUR "PENYESUAIAN STOK" ---
+
     public function selectStockForAdjustment(int $stockId)
     {
         $stock = Stock::where('id', $stockId)->where('branch_id', Auth::user()->branch_id)->firstOrFail();
@@ -140,61 +122,37 @@ class BranchStockManagement extends Component
 
     public function updatedAdjustmentValue($value)
     {
+        // Pastikan nilai penyesuaian adalah integer
         $this->newQuantity = $this->currentQuantity + (int)$value;
     }
 
-    public function updateStock()
+    public function updateStock(BranchStockService $stockService)
     {
-        $this->validate(['adjustmentValue', 'adjustmentNotes']);
+        $validatedData = $this->validate([
+            'adjustmentValue' => 'required|integer|not_in:0',
+            'adjustmentNotes' => 'required|string|max:255|min:5',
+        ], [
+            'adjustmentValue.not_in' => 'Nilai penyesuaian tidak boleh nol.',
+            'adjustmentNotes.required' => 'Catatan atau alasan penyesuaian wajib diisi.',
+            'adjustmentNotes.min' => 'Catatan harus berisi minimal 5 karakter.',
+        ]);
+
         try {
-            DB::transaction(function () {
-                $oldQuantity = $this->selectedStock->quantity;
-                $finalNewQuantity = $oldQuantity + (int) $this->adjustmentValue;
-                if ($finalNewQuantity < 0) {
-                    throw new \Exception("Kuantitas baru tidak boleh kurang dari 0.");
-                }
-                $this->selectedStock->update(['quantity' => $finalNewQuantity]);
+            $stockService->adjustStock(
+                $this->selectedStock,
+                $validatedData['adjustmentValue'],
+                $validatedData['adjustmentNotes']
+            );
 
-                // --- PERBAIKAN LOGIKA TIPE ---
-                $adjustmentType = (int) $this->adjustmentValue > 0 ? 'adjustment_increase' : 'adjustment_decrease';
-
-                $this->createStockMovement(
-                    $this->selectedStock->product_id,
-                    Auth::user()->branch_id,
-                    $adjustmentType, // Menggunakan tipe yang valid
-                    (int) $this->adjustmentValue,
-                    $this->adjustmentNotes,
-                    $oldQuantity,
-                    $finalNewQuantity
-                );
-                // --- BATAS PERBAIKAN ---
-            });
-            session()->flash('success', 'Stok berhasil disesuaikan.');
+            session()->flash('message', 'Stok berhasil disesuaikan.');
             $this->closeModal();
             $this->dispatch('stockUpdated');
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (Exception $e) {
             session()->flash('error', 'Gagal menyesuaikan stok: ' . $e->getMessage());
         }
     }
 
-    // METODE BANTU (HELPERS) & UMUM
-    private function createStockMovement(int $productId, int $branchId, string $type, int $quantityChange, string $notes, ?int $qtyBefore = null, ?int $qtyAfter = null)
-    {
-        StockMovement::create([
-            'product_id' => $productId,
-            'branch_id' => $branchId,
-            'user_id' => Auth::id(),
-            'type' => $type,
-            'quantity' => in_array($type, ['transfer_in', 'transfer_out']) ? $quantityChange : null,
-            'quantity_change' => in_array($type, ['adjustment_increase', 'adjustment_decrease']) ? $quantityChange : null,
-            'quantity_before' => $qtyBefore,
-            'quantity_after' => $qtyAfter,
-            'notes' => $notes,
-            'movement_date' => now(),
-        ]);
-    }
-
+    // --- METODE UMUM ---
     public function closeModal()
     {
         $this->showAddStockModal = false;
