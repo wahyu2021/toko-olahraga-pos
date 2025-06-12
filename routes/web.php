@@ -11,6 +11,7 @@ use App\Livewire\AdminPusat\UserManagement;
 use App\Livewire\ManajerPusat\ViewForecast;
 use App\Livewire\AdminPusat\FinancialReport;
 use App\Livewire\AdminPusat\StockManagement;
+use App\Livewire\AdminPusat\BranchManagement;
 use App\Livewire\AdminPusat\DemandForecasting;
 use App\Livewire\AdminPusat\ProductManagement;
 use App\Livewire\ManajerCabang\ViewBranchStock;
@@ -61,6 +62,7 @@ Route::middleware([
             Route::get('/users', UserManagement::class)->name('users');
             Route::get('/products', ProductManagement::class)->name('products');
             Route::get('/stocks', StockManagement::class)->name('stocks');
+            Route::get('/branches', BranchManagement::class)->name('branches');
         });
 
         Route::get('/reports/financial', FinancialReport::class)->name('reports.financial');
@@ -69,12 +71,13 @@ Route::middleware([
         Route::get('/pembelian/baru', PurchaseForm::class)->name('purchases.create');
     });
 
-    // Admin Pusat Route
+    // Admin Pusat Cabang
     Route::middleware(['auth', 'role:' . User::ROLE_ADMIN_CABANG])->prefix('/admin-cabang')->name('admin-cabang.')->group(function () {
         Route::get('/dashboard', AdminCabangDashboard::class)->name('dashboard');
         Route::get('/stok', BranchStockManagement::class)->name('stok.manage');
         Route::get('/pengguna', BranchUserManagement::class)->name('pengguna.manage');
         Route::get('/laporan/keuangan', BranchFinancialReport::class)->name('laporan.keuangan');
+        
     });
 
 

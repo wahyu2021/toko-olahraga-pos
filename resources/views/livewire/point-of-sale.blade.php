@@ -325,18 +325,7 @@
                 </div>
             </div>
         </div>
-        <script>
-            function printReceipt() {
-                const printContents = document.getElementById('receipt-printable-area').innerHTML;
-                const originalContents = document.body.innerHTML;
-                const receiptStyles =
-                    `<style> @media print { @page { size: 58mm auto; margin: 0mm; } body { margin:0; font-family:monospace; font-size:9pt;} img {display:none;} .text-center {text-align:center;} .mb-3{margin-bottom:0.75rem;} .text-lg{font-size:1.125rem;} .font-semibold{font-weight:600;} .text-xs{font-size:0.75rem;line-height:1rem;} hr.my-2{margin-top:0.5rem;margin-bottom:0.5rem;border-style:dashed;border-top-width:1px;} .flex{display:flex;} .justify-between{justify-content:space-between;} .mb-1{margin-bottom:0.25rem;} .mt-3{margin-top:0.75rem;} body * {visibility: hidden;} #receipt-printable-area, #receipt-printable-area * {visibility: visible;} #receipt-printable-area {position:absolute;left:0;top:0;width:100%;} } </style>`;
-                document.body.innerHTML = receiptStyles + printContents;
-                window.print();
-                document.body.innerHTML = originalContents;
-                Livewire.dispatch('receiptClosed');
-            }
-        </script>
+        <script></script>
     @endif
 </div>
 
@@ -422,68 +411,48 @@
 
             const qrCodeSuccessCallbackCamera = (decodedText, decodedResult) => {
                 if (!isCameraScanning) {
-                    console.log("[Kamera] Scan terdeteksi tapi kamera sudah tidak aktif, diabaikan.");
-                    return;
+                    return; // Abaikan jika scan terdeteksi saat kamera tidak aktif
                 }
+                isCameraScanning = false; // Langsung set flag untuk mencegah scan ganda
 
                 const skuToProcess = decodedText.trim();
 
-                // Tampilkan pesan "Memproses" terlebih dahulu
+                // 1. Beri feedback visual instan
                 if (qrCameraStatus) {
                     qrCameraStatus.innerHTML =
                         `<span class="text-blue-600 text-xs">QR Terdeteksi: <strong>${skuToProcess}</strong>. Memproses...</span>`;
                 }
 
-                // Hentikan kamera
-                stopCameraAndResetUI("Memproses hasil scan...").then(
-                    () => { // Pesan ini mungkin tidak akan terlihat karena dioverride cepat
-                        console.log(`[Kamera] QR Terdeteksi dan kamera dihentikan: ${skuToProcess}`);
+                // 2. Hentikan kamera
+                html5QrCode.stop().then(() => {
+                    console.log("[Kamera] Scanner dihentikan setelah scan berhasil.");
 
-                        if (skuToProcess && skuToProcess !== '') {
-                            // Update status menjadi sukses setelah kamera pasti berhenti dan sebelum kirim ke Livewire
-                            if (qrCameraStatus) {
-                                qrCameraStatus.innerHTML =
-                                    `<span class="text-green-600 text-xs">QR Terbaca: <strong>${skuToProcess}</strong>. Produk sedang dicari...</span>`;
-                            }
-                            Livewire.dispatchTo('point-of-sale', 'productScanned', {
-                                sku: skuToProcess
-                            });
-                            if (searchInputPOS) searchInputPOS.value = '';
-                            
-                        } else {
-                            console.error("[Kamera] DecodedText tidak valid untuk dikirim:", skuToProcess);
-                            if (qrCameraStatus) qrCameraStatus.innerHTML =
-                                `<span class="text-red-600 text-xs">Error: Hasil scan QR tidak valid.</span>`;
-                        }
-
-                        setTimeout(() => {
-                            if (qrCameraStatus) {
-                                const currentText = qrCameraStatus.innerText;
-                                if (currentText.includes("QR Terbaca:") || currentText.includes(
-                                        "Hasil scan QR tidak valid")) {
-                                    qrCameraStatus.innerHTML =
-                                        '<span class="text-xs">Kamera nonaktif. Klik "Buka Kamera" untuk scan.</span>';
-                                }
-                            }
-                        }, 4000);
-
-                        if (searchInputPOS && !document.querySelector(
-                                '.fixed.inset-0.z-\\[100\\][aria-labelledby="modal-title-receipt"]')) {
-                            setTimeout(() => searchInputPOS.focus(), 50);
-                        }
-
-                        
-
-
-                    }).catch(err => {
-                    console.error("[Kamera] Gagal menghentikan atau memproses scan:", err);
-                    if (qrCameraStatus) qrCameraStatus.innerHTML =
-                        `<span class="text-red-600 text-xs">Error internal saat memproses scan kamera.</span>`;
-                    // Pastikan UI kamera direset jika ada error saat stop
-                    isCameraScanning = false;
                     if (qrReaderElement) qrReaderElement.style.display = 'none';
                     if (startCameraButton) startCameraButton.style.display = 'inline-flex';
                     if (stopCameraButton) stopCameraButton.style.display = 'none';
+
+                    // 3. Kirim data ke Livewire setelah kamera berhenti
+                    if (skuToProcess) {
+                        Livewire.dispatchTo('point-of-sale', 'productScanned', {
+                            sku: skuToProcess
+                        });
+                    } else {
+                        if (qrCameraStatus) qrCameraStatus.innerHTML =
+                            `<span class="text-red-600 text-xs">Error: Hasil scan QR tidak valid.</span>`;
+                    }
+
+                    // 4. Reset pesan status setelah beberapa detik
+                    setTimeout(() => {
+                        if (qrCameraStatus) {
+                            qrCameraStatus.innerHTML =
+                                '<span class="text-xs">Kamera nonaktif. Klik untuk scan lagi.</span>';
+                        }
+                    }, 3000);
+
+                }).catch(err => {
+                    console.error("[Kamera] Gagal menghentikan QR Scanner:", err);
+                    if (qrCameraStatus) qrCameraStatus.innerHTML =
+                        `<span class="text-red-600 text-xs">Gagal menutup kamera.</span>`;
                 });
             };
 
@@ -624,51 +593,77 @@
             }
         });
 
-        Livewire.on('receiptClosed', () => {
-            const searchInputPOS = document.querySelector('[x-ref="searchInputPOS"]');
-            if (searchInputPOS && !document.querySelector(
-                    '.fixed.inset-0.z-\\[100\\][aria-labelledby="modal-title-receipt"]')) {
-                setTimeout(() => searchInputPOS.focus(), 50);
-            }
-        });
-
-        // Fungsi printReceipt sudah ada di dalam script modal, bisa dihapus dari sini jika tidak digunakan secara global
-        // Jika tetap ingin ada di sini sebagai fallback atau penggunaan lain:
         function printReceipt() {
             const printContents = document.getElementById('receipt-printable-area');
             if (!printContents) {
-                console.error("Elemen struk untuk dicetak tidak ditemukan.");
+                console.error("Elemen struk #receipt-printable-area tidak ditemukan.");
                 return;
             }
-            const printableArea = printContents.innerHTML;
-            const originalContents = document.body.innerHTML;
-            const receiptStyles =
-                `<style> @media print { @page { size: 58mm auto; margin: 0mm; } body { margin:0; font-family:monospace; font-size:9pt;} img {display:none;} .text-center {text-align:center;} .mb-3{margin-bottom:0.75rem;} .text-lg{font-size:1.125rem;} .font-semibold{font-weight:600;} .text-xs{font-size:0.75rem;line-height:1rem;} hr.my-2{margin-top:0.5rem;margin-bottom:0.5rem;border-style:dashed;border-top-width:1px;} .flex{display:flex;} .justify-between{justify-content:space-between;} .mb-1{margin-bottom:0.25rem;} .mt-3{margin-top:0.75rem;} body * {visibility: hidden;} #receipt-printable-area, #receipt-printable-area * {visibility: visible;} #receipt-printable-area {position:absolute;left:0;top:0;width:100%;} } </style>`;
 
-            // Buat iframe sementara untuk mencetak
+            const printableArea = printContents.innerHTML;
+            const receiptStyles = `
+            <style>
+                @media print { 
+                    @page { 
+                        size: 58mm auto; 
+                        margin: 3mm; /* GANTI DARI 0mm menjadi 3mm atau sesuai kebutuhan */
+                    } 
+                    body { 
+                        margin: 0; 
+                        font-family: monospace; 
+                        font-size: 9pt;
+                    } 
+                    /* Style lainnya tetap sama */
+                    img, svg { display: none; }
+                    .text-center { text-align: center; }
+                    .mb-3 { margin-bottom: 0.75rem; }
+                    .text-lg { font-size: 1.125rem; }
+                    .font-semibold { font-weight: 600; }
+                    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+                    hr.my-2 { margin-top: 0.5rem; margin-bottom: 0.5rem; border-style: dashed; border-top-width: 1px; }
+                    .flex { display: flex; }
+                    .justify-between { justify-content: space-between; }
+                    .mb-1 { margin-bottom: 0.25rem; }
+                    .mt-3 { margin-top: 0.75rem; }
+                    .font-bold { font-weight: 700; }
+                } 
+            </style>
+        `;
+
+            // Buat iframe sementara
             const iframe = document.createElement('iframe');
-            iframe.style.height = '0';
-            iframe.style.width = '0';
             iframe.style.position = 'absolute';
-            iframe.style.visibility = 'hidden';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
             document.body.appendChild(iframe);
 
             const iframeDoc = iframe.contentWindow.document;
             iframeDoc.open();
+            // Tulis HTML lengkap dengan style ke dalam iframe
             iframeDoc.write('<html><head><title>Struk</title>' + receiptStyles + '</head><body>' + printableArea +
                 '</body></html>');
             iframeDoc.close();
 
+            // Panggil fungsi cetak pada iframe
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
 
-            // Hapus iframe setelah beberapa saat
+            // Hapus iframe setelah beberapa saat untuk memastikan proses cetak selesai
             setTimeout(() => {
                 document.body.removeChild(iframe);
-            }, 1000);
+            }, 500);
 
-            // Kembalikan fokus ke input search jika modal tidak ada
+            // Beritahu Livewire bahwa modal bisa ditutup dan fokus bisa dikembalikan
             Livewire.dispatch('receiptClosed');
         }
+
+        // Pastikan listener ini ada untuk mengembalikan fokus setelah modal ditutup
+        Livewire.on('receiptClosed', () => {
+            const searchInputPOS = document.querySelector('[x-ref="searchInputPOS"]');
+            if (searchInputPOS) {
+                setTimeout(() => searchInputPOS.focus(), 100);
+            }
+        });
     </script>
 @endpush

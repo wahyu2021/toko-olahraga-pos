@@ -36,6 +36,12 @@
                                 <span class="{{ $sidebarOpen ? 'inline' : 'hidden' }} truncate">Manajemen
                                     Pengguna</span>
                             </a>
+                            <a href="{{ route('admin-pusat.management.branches') }}" title="Manajemen Cabang"
+                                class="flex items-center py-2.5 px-3 rounded-md hover:bg-orange-600 group transition-colors duration-150 {{ request()->routeIs('admin-pusat.management.branches') ? 'bg-orange-800' : '' }} {{ !$sidebarOpen ? 'justify-center' : '' }}">
+                                <x-heroicon-o-building-storefront class="h-6 w-6 shrink-0 {{ $sidebarOpen ? 'mr-3' : '' }}" />
+                                <span class="{{ $sidebarOpen ? 'inline' : 'hidden' }} truncate">
+                                    Manajemen Cabang</span>
+                            </a>
                             <a href="{{ route('admin-pusat.management.products') }}" title="Manajemen Produk"
                                 class="flex items-center py-2.5 px-3 rounded-md hover:bg-orange-600 group transition-colors duration-150 {{ request()->routeIs('admin-pusat.management.products') ? 'bg-orange-800' : '' }} {{ !$sidebarOpen ? 'justify-center' : '' }}">
                                 <x-heroicon-o-cube class="h-6 w-6 shrink-0 {{ $sidebarOpen ? 'mr-3' : '' }}" />
@@ -66,7 +72,7 @@
                                     Permintaan</span>
                             </a>
 
-                            {{-- === NAVIGASI UNTUK MANAJER PUSAT (KODE YANG DIPERBAIKI) === --}}
+                        {{-- === NAVIGASI UNTUK MANAJER PUSAT (KODE YANG DIPERBAIKI) === --}}
                         @elseif (Auth::user()->isManajerPusat())
                             <a href="{{ route('manajer-pusat.dashboard') }}" title="Dashboard"
                                 class="flex items-center py-2.5 px-3 rounded-md hover:bg-orange-600 group transition-colors duration-150 {{ request()->routeIs('manajer-pusat.dashboard') ? 'bg-orange-800' : '' }} {{ !$sidebarOpen ? 'justify-center' : '' }}">
@@ -90,7 +96,7 @@
                                 <span class="{{ $sidebarOpen ? 'inline' : 'hidden' }} truncate">Laporan Keuangan</span>
                             </a>
 
-                            {{-- === NAVIGASI UNTUK MANAJER CABANG === --}}
+                        {{-- === NAVIGASI UNTUK MANAJER CABANG === --}}
                         @elseif (Auth::user()->isManajerCabang())
                             <a href="{{ route('manajer-cabang.dashboard') }}" title="Dashboard Cabang"
                                 class="flex items-center py-2.5 px-3 rounded-md hover:bg-orange-600 group transition-colors duration-150 {{ request()->routeIs('manajer-cabang.dashboard') ? 'bg-orange-800' : '' }} {{ !$sidebarOpen ? 'justify-center' : '' }}">

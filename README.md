@@ -76,7 +76,7 @@ Ikuti langkah-langkah ini untuk menjalankan sistem di lingkungan lokal Anda:
     composer install
     ```
 
-3.  **Persiapkan File Environment Anda:**
+3.  **Persiapkan File Environment:**
     Salin `.env.example` menjadi `.env`:
 
     ```bash
@@ -89,7 +89,7 @@ Ikuti langkah-langkah ini untuk menjalankan sistem di lingkungan lokal Anda:
     php artisan key:generate
     ```
 
-5.  **Atur Koneksi ke Database Anda (di file `.env`):**
+5.  **Atur Koneksi ke Database (di file `.env`):**
 
     ```env
     DB_CONNECTION=mysql
@@ -102,7 +102,7 @@ Ikuti langkah-langkah ini untuk menjalankan sistem di lingkungan lokal Anda:
     APP_URL=http://localhost:8000 # Penting untuk URL yang benar!
     ```
 
-6.  **Bangun Struktur Data Anda (Migrasi & Seeder):**
+6.  **Bangun Struktur Data (Migrasi & Seeder):**
 
     ```bash
     php artisan migrate --seed
@@ -127,6 +127,8 @@ Ikuti langkah-langkah ini untuk menjalankan sistem di lingkungan lokal Anda:
 9.  **Nyalakan Servernya! (Development Server):**
     ```bash
     php artisan serve
+    atau
+    composr run dev 
     ```
     🎉 Aplikasi Anda siap di `http://localhost:8000`! 🎉
 

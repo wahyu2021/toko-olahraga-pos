@@ -40,11 +40,9 @@ class PointOfSale extends Component
 
     protected function rules()
     {
+        // Ambil daftar metode pembayaran langsung dari properti yang sudah di-mount.
+        // Ini memastikan validasi selalu sinkron dengan data yang ada.
         $validPaymentMethods = array_keys($this->paymentMethods);
-        // Fallback jika $paymentMethods belum terisi saat validasi awal (seharusnya sudah di mount)
-        if (empty($validPaymentMethods)) {
-            $validPaymentMethods = ['cash', 'debit_card', 'credit_card', 'qris', 'ewallet_gopay', 'ewallet_ovo', 'ewallet_dana', 'ewallet_shopeepay'];
-        }
 
         return [
             'customerName' => 'nullable|string|max:255',
@@ -100,7 +98,7 @@ class PointOfSale extends Component
         Log::info('handleProductScanned dipanggil dengan SKU (parameter langsung):', ['sku_param' => $sku]);
 
         if ($sku !== null && !empty(trim($sku))) {
-            
+
             $this->searchInput = trim($sku);
             $this->searchAndAddProduct();
         } else {
