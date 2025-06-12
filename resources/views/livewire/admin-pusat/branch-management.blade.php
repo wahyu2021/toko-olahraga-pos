@@ -8,10 +8,10 @@
 
     {{-- KONTEN UTAMA --}}
     <div class="py-6">
-        <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <div class="p-4 bg-white shadow-sm sm:rounded-lg sm:p-6">
+        <div class="mx-auto max-w-full sm:px-6 lg:px-8">
+            <div class="p-4 bg-white shadow-sm sm:p-6 sm:rounded-lg">
                 <div class="flex items-center justify-between mb-6">
-                    <div>
+                    <div class="w-1/3">
                         <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari nama cabang..."
                             class="block w-full border-gray-300 rounded-md shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
                     </div>
@@ -37,15 +37,27 @@
                             @forelse ($branches as $branch)
                                 <tr>
                                     <td class="px-3 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
-                                        {{ $branch->name }}</td>
-                                    <td class="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{{ $branch->address }}
+                                        {{ $branch->name }}
                                     </td>
-                                    <td class="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{{ $branch->phone }}
+                                    <td class="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                                        {{ $branch->address }}
+                                    </td>
+                                    <td class="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">
+                                        {{ $branch->phone }}
                                     </td>
                                     <td
                                         class="relative py-4 pl-3 pr-4 text-sm font-medium text-right whitespace-nowrap sm:pr-6">
-                                        <button wire:click="edit({{ $branch->id }})"
-                                            class="font-semibold text-orange-600 hover:text-orange-900">Edit</button>
+                                        <div class="flex items-center justify-end space-x-3">
+                                            {{-- Tombol Edit --}}
+                                            <button wire:click="edit({{ $branch->id }})"
+                                                class="font-semibold text-orange-600 hover:text-orange-900">Edit</button>
+
+                                            <span class="text-gray-300">|</span>
+
+                                            {{-- PERUBAHAN: Tombol Hapus --}}
+                                            <button wire:click="confirmDelete({{ $branch->id }})"
+                                                class="font-semibold text-red-600 hover:text-red-900">Hapus</button>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -66,10 +78,32 @@
         </div>
     </div>
 
-    {{-- Memanggil file partial untuk modal --}}
+    {{-- Modal untuk Tambah/Edit Cabang --}}
     @include('livewire.admin-pusat.partials._branch-modal')
 
-    {{-- Komponen Notifikasi (jika belum ada di layout utama) --}}
+    {{-- PERUBAHAN: Modal Konfirmasi Hapus --}}
+    <x-confirmation-modal wire:model.live="confirmingBranchDeletion">
+        <x-slot name="title">
+            Hapus Cabang
+        </x-slot>
+
+        <x-slot name="content">
+            Apakah Anda yakin ingin menghapus cabang ini? Tindakan ini tidak dapat dibatalkan.
+        </x-slot>
+
+        <x-slot name="footer">
+            <x-secondary-button wire:click="$set('confirmingBranchDeletion', false)" wire:loading.attr="disabled">
+                Batal
+            </x-secondary-button>
+
+            <x-danger-button class="ml-3" wire:click="delete()" wire:loading.attr="disabled">
+                Hapus Cabang
+            </x-danger-button>
+        </x-slot>
+    </x-confirmation-modal>
+
+    {{-- Komponen Notifikasi --}}
+    {{-- (Kode notifikasi Anda diletakkan di sini, tidak perlu diubah) --}}
     <div x-data="{ show: false, message: '', type: '' }"
         x-on:show-notification.window="message = $event.detail.message; type = $event.detail.type; show = true; setTimeout(() => show = false, 4000)"
         x-show="show" x-transition:enter="transition ease-out duration-300"
@@ -78,7 +112,7 @@
         x-transition:leave="transition ease-in duration-300"
         x-transition:leave-start="opacity-100 transform translate-y-0"
         x-transition:leave-end="opacity-0 transform translate-y-2" style="display: none;"
-        class="fixed z-50 w-full max-w-sm top-5 right-5">
+        class="fixed z-50 max-w-sm w-full top-5 right-5">
         <div class="p-4 rounded-lg shadow-lg"
             :class="{ 'bg-green-100 text-green-800 border border-green-200': type === 'success', 'bg-red-100 text-red-800 border border-red-200': type === 'error' }">
             <div class="flex items-center">

@@ -3,14 +3,16 @@
 namespace App\Livewire\AdminPusat;
 
 use App\Models\Branch;
+use App\Services\AdminPusat\BranchService;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Exception;
 
 class BranchManagement extends Component
 {
     use WithPagination;
 
-    // Properti untuk tabel dan modal
+    // Properti untuk state komponen
     public $search = '';
     public bool $showBranchModal = false;
     public ?int $branchId = null;
@@ -18,8 +20,12 @@ class BranchManagement extends Component
     public string $address = '';
     public string $phone = '';
 
+    public bool $confirmingBranchDeletion = false;
+    public ?int $branchIdToDelete = null;
+
     protected $paginationTheme = 'tailwind';
 
+    // Aturan validasi tetap di sini karena terkait langsung dengan form
     protected function rules()
     {
         return [
@@ -41,9 +47,6 @@ class BranchManagement extends Component
         $this->resetPage();
     }
 
-    /**
-     * Membuka modal dalam mode 'tambah baru'.
-     */
     public function create()
     {
         $this->resetErrorBag();
@@ -51,9 +54,6 @@ class BranchManagement extends Component
         $this->showBranchModal = true;
     }
 
-    /**
-     * Membuka modal dalam mode 'edit' dan mengisi data.
-     */
     public function edit(Branch $branch)
     {
         $this->resetErrorBag();
@@ -65,31 +65,28 @@ class BranchManagement extends Component
     }
 
     /**
-     * Menyimpan data (baik baru maupun update).
+     * 2. Metode save() sekarang memanggil BranchService
      */
-    public function save()
+    public function save(BranchService $branchService)
     {
-        $this->validate();
+        $validatedData = $this->validate();
+        $message = '';
 
-        $data = [
-            'name' => $this->name,
-            'address' => $this->address,
-            'phone' => $this->phone,
-        ];
-
-        if ($this->branchId) {
-            // Mode Update
-            $branch = Branch::findOrFail($this->branchId);
-            $branch->update($data);
-            $message = 'Cabang berhasil diperbarui.';
-        } else {
-            // Mode Tambah Baru
-            Branch::create($data);
-            $message = 'Cabang baru berhasil ditambahkan.';
+        try {
+            if ($this->branchId) {
+                // Mode Update
+                $branchService->updateBranch($this->branchId, $validatedData);
+                $message = 'Cabang berhasil diperbarui.';
+            } else {
+                // Mode Tambah Baru
+                $branchService->createBranch($validatedData);
+                $message = 'Cabang baru berhasil ditambahkan.';
+            }
+            $this->closeModal();
+            $this->dispatch('show-notification', message: $message, type: 'success');
+        } catch (Exception $e) {
+            $this->dispatch('show-notification', message: 'Terjadi kesalahan: ' . $e->getMessage(), type: 'error');
         }
-
-        $this->closeModal();
-        $this->dispatch('show-notification', message: $message, type: 'success');
     }
 
     public function closeModal()
@@ -97,11 +94,34 @@ class BranchManagement extends Component
         $this->showBranchModal = false;
     }
 
-    public function render()
+    public function confirmDelete(int $id)
     {
-        $branches = Branch::where('name', 'like', '%' . $this->search . '%')
-            ->orderBy('name', 'asc')
-            ->paginate(10);
+        $this->branchIdToDelete = $id;
+        $this->confirmingBranchDeletion = true;
+    }
+
+    /**
+     * 3. Metode delete() sekarang memanggil BranchService
+     */
+    public function delete(BranchService $branchService)
+    {
+        try {
+            $branchService->deleteBranch($this->branchIdToDelete);
+            $this->dispatch('show-notification', message: 'Cabang berhasil dihapus.', type: 'success');
+        } catch (Exception $e) {
+            // Menangkap error dari service (misal: cabang tidak bisa dihapus)
+            $this->dispatch('show-notification', message: $e->getMessage(), type: 'error');
+        } finally {
+            $this->confirmingBranchDeletion = false;
+        }
+    }
+
+    /**
+     * 4. Render() sekarang memanggil BranchService
+     */
+    public function render(BranchService $branchService)
+    {
+        $branches = $branchService->getPaginatedBranches($this->search);
 
         return view('livewire.admin-pusat.branch-management', [
             'branches' => $branches,

@@ -1,3 +1,4 @@
+{{-- PERUBAHAN DI SINI: Menggunakan variabel $showBranchModal yang benar --}}
 @if ($showBranchModal)
     <x-dialog-modal wire:model.live="showBranchModal">
         <x-slot name="title">
