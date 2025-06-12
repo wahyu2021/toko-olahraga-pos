@@ -47,15 +47,7 @@ class PurchaseForm extends Component
         ];
     }
 
-    public function addProduct()
-    { /* ... (tidak berubah) ... */
-    }
-    public function removeProduct($index)
-    { /* ... (tidak berubah) ... */
-    }
-    public function updatedOrderProducts($value, $key)
-    { /* ... (tidak berubah) ... */
-    }
+    
 
     public function savePurchase()
     {
@@ -118,10 +110,6 @@ class PurchaseForm extends Component
                         'subtotal' => $productData['quantity_ordered'] * $productData['unit_price'],
                     ]);
 
-                    // 3. Update stok di cabang PUSAT (ID = 1)
-                    // Logika ini masih relevan jika tabel 'stocks' Anda masih memiliki 'branch_id'
-                    // meskipun tabel 'purchases' sudah tidak punya.
-                    // Ini mengasumsikan semua pembelian masuk ke satu gudang pusat.
                     Stock::updateOrCreate(
                         ['product_id' => $productModel->id, 'branch_id' => 1], // Selalu ke branch_id 1
                         ['quantity' => DB::raw('quantity + ' . $productData['quantity_ordered']), 'last_restock_date' => now()]

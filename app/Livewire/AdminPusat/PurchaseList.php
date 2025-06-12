@@ -44,10 +44,7 @@ class PurchaseList extends Component
     public function render()
     {
         // === PERBAIKAN PADA QUERY UTAMA ===
-        $query = Purchase::with(['supplier', 'user']) // Eager loading relasi dasar
-            // DITAMBAHKAN: Gunakan withSum untuk menjumlahkan kuantitas dari relasi 'items'
-            // 'items' adalah nama relasi di model Purchase
-            // 'quantity_received' adalah nama kolom yang dijumlahkan
+        $query = Purchase::with(['supplier', 'user'])
             ->withSum('items as total_quantity_received', 'quantity_received')
             ->latest('purchase_date'); // Urutkan berdasarkan tanggal pembelian terbaru
 

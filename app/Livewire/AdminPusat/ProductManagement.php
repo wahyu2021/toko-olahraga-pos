@@ -2,39 +2,45 @@
 
 namespace App\Livewire\AdminPusat;
 
-use Livewire\Component;
 use App\Models\Product;
-use App\Models\Category;
-use App\Models\Supplier;
-use Livewire\WithPagination;
+use App\Services\AdminPusat\ProductService;
+use Exception;
+use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage; 
-use Illuminate\Validation\Rule;
+use Livewire\WithPagination;
 
 class ProductManagement extends Component
 {
-    use WithPagination, WithFileUploads; 
+    use WithPagination, WithFileUploads;
 
+    // Properti UI State
     public $search = '';
-    public $sortField = 'name';
-    public $sortAsc = true;
-    public $filterCategory = '';
+    public $filterCategory = null;
+    public bool $showProductModal = false;
+    public bool $showDeleteModal = false;
+    public bool $isEditMode = false;
 
-    public $productId;
-    public $name, $sku, $description, $category_id, $supplier_id;
-    public $purchase_price, $selling_price, $low_stock_threshold;
-    public $is_active = true;
+    // Properti untuk Sorting
+    public string $sortField = 'name';
+    public bool $sortAsc = true;
 
-    // Properti untuk gambar
-    public $newProductImage; // Untuk file upload baru
-    public $existingImagePath; // Untuk path gambar yang sudah ada saat edit
+    // Properti untuk Form (Sesuai dengan view Anda)
+    public ?int $productId = null;
+    public string $name = '';
+    public string $sku = '';
+    public ?int $category_id = null;
+    public ?int $supplier_id = null;
+    public string $description = '';
+    public $purchase_price = '';
+    public $selling_price = '';
+    public $low_stock_threshold = '';
+    public bool $is_active = true;
+    public $newProductImage = null;
+    public ?string $existingImagePath = null;
 
+    // PERBAIKAN: Properti yang hilang dideklarasikan kembali
     public $categories = [];
     public $suppliers = [];
-
-    public $showProductModal = false;
-    public $showDeleteModal = false;
-    public $isEditMode = false;
 
     protected $paginationTheme = 'tailwind';
 
@@ -42,35 +48,26 @@ class ProductManagement extends Component
     {
         return [
             'name' => 'required|string|max:255',
-            'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($this->productId)],
+            'sku' => 'required|string|max:100|unique:products,sku,' . $this->productId,
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0|gte:purchase_price',
-            'newProductImage' => 'nullable|image|max:2048', // Validasi untuk gambar baru (maks 2MB)
+            'newProductImage' => 'nullable|image|max:2048',
             'low_stock_threshold' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ];
     }
 
-    public function messages()
+    public function mount(ProductService $productService)
     {
-        return [
-            'category_id.required' => 'Kategori produk wajib dipilih.',
-            'selling_price.gte' => 'Harga jual harus lebih besar atau sama dengan harga beli.',
-            'newProductImage.image' => 'File yang diupload harus berupa gambar.',
-            'newProductImage.max' => 'Ukuran gambar maksimal 2MB.',
-        ];
+        // Metode ini sekarang akan mengisi properti yang sudah dideklarasikan
+        $this->categories = $productService->getAllCategories();
+        $this->suppliers = $productService->getAllSuppliers();
     }
 
-    public function mount()
-    {
-        $this->categories = Category::orderBy('name')->get();
-        $this->suppliers = Supplier::orderBy('name')->get();
-    }
-
-    public function sortBy($field) // ... (tetap sama)
+    public function sortBy(string $field)
     {
         if ($this->sortField === $field) {
             $this->sortAsc = !$this->sortAsc;
@@ -80,49 +77,28 @@ class ProductManagement extends Component
         $this->sortField = $field;
     }
 
-
-    public function updatingSearch() // ... (tetap sama)
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    public function updatingFilterCategory()
     {
         $this->resetPage();
     }
 
-    public function updatingFilterCategory() // ... (tetap sama)
+    private function resetForm()
     {
-        $this->resetPage();
+        $this->resetExcept('categories', 'suppliers', 'sortField', 'sortAsc', 'search', 'filterCategory');
+        $this->resetErrorBag();
     }
 
+    // Metode ini dipanggil dari tombol 'Tambah Produk'
     public function addProduct()
     {
         $this->resetForm();
         $this->isEditMode = false;
+        $this->is_active = true;
         $this->showProductModal = true;
-    }
-
-    public function createProduct()
-    {
-        $validatedData = $this->validate();
-        $imagePath = null;
-
-        if ($this->newProductImage) {
-            $imagePath = $this->newProductImage->store('products', 'public'); // Simpan di storage/app/public/products
-        }
-
-        Product::create([
-            'name' => $validatedData['name'],
-            'sku' => $validatedData['sku'],
-            'description' => $validatedData['description'],
-            'category_id' => $validatedData['category_id'],
-            'supplier_id' => $validatedData['supplier_id'],
-            'purchase_price' => $validatedData['purchase_price'],
-            'selling_price' => $validatedData['selling_price'],
-            'image_path' => $imagePath, // Simpan path gambar
-            'low_stock_threshold' => $validatedData['low_stock_threshold'],
-            'is_active' => $validatedData['is_active'],
-        ]);
-
-        $this->showProductModal = false;
-        session()->flash('message', 'Produk berhasil ditambahkan.');
-        $this->resetForm();
     }
 
     public function editProduct(Product $product)
@@ -133,119 +109,78 @@ class ProductManagement extends Component
         $this->name = $product->name;
         $this->sku = $product->sku;
         $this->description = $product->description;
-        $this->category_id = $product->category_id;
-        $this->supplier_id = $product->supplier_id;
         $this->purchase_price = $product->purchase_price;
         $this->selling_price = $product->selling_price;
-        $this->existingImagePath = $product->image_path; // Muat path gambar yang sudah ada
         $this->low_stock_threshold = $product->low_stock_threshold;
+        $this->category_id = $product->category_id;
+        $this->supplier_id = $product->supplier_id;
         $this->is_active = $product->is_active;
-        $this->newProductImage = null; // Pastikan newProductImage kosong saat edit
+        $this->existingImagePath = $product->image_path;
         $this->showProductModal = true;
     }
 
-    public function updateProduct()
+    // Menggunakan metode yang didelegasikan ke Service
+    public function createProduct(ProductService $productService)
     {
         $validatedData = $this->validate();
-        $product = Product::find($this->productId);
-        $imagePath = $product->image_path; // Default ke gambar yang sudah ada
 
-        if ($product) {
-            if ($this->newProductImage) {
-                // Hapus gambar lama jika ada dan gambar baru diupload
-                if ($product->image_path) {
-                    Storage::disk('public')->delete($product->image_path);
-                }
-                $imagePath = $this->newProductImage->store('products', 'public');
-            }
-
-            $product->update([
-                'name' => $validatedData['name'],
-                'sku' => $validatedData['sku'],
-                'description' => $validatedData['description'],
-                'category_id' => $validatedData['category_id'],
-                'supplier_id' => $validatedData['supplier_id'],
-                'purchase_price' => $validatedData['purchase_price'],
-                'selling_price' => $validatedData['selling_price'],
-                'image_path' => $imagePath,
-                'low_stock_threshold' => $validatedData['low_stock_threshold'],
-                'is_active' => $validatedData['is_active'],
-            ]);
-
-            $this->showProductModal = false;
-            session()->flash('message', 'Produk berhasil diperbarui.');
-            $this->resetForm();
+        try {
+            $productService->createProduct($validatedData);
+            session()->flash('message', 'Produk baru berhasil ditambahkan.');
+            $this->closeModal();
+        } catch (Exception $e) {
+            session()->flash('error', 'Gagal menambahkan produk: ' . $e->getMessage());
         }
     }
 
-    public function confirmDelete($productId) // ... (tetap sama)
+    public function updateProduct(ProductService $productService)
+    {
+        $validatedData = $this->validate();
+
+        try {
+            $productService->updateProduct($this->productId, $validatedData);
+            session()->flash('message', 'Produk berhasil diperbarui.');
+            $this->closeModal();
+        } catch (Exception $e) {
+            session()->flash('error', 'Gagal memperbarui produk: ' . $e->getMessage());
+        }
+    }
+
+    public function confirmDelete(int $productId)
     {
         $this->productId = $productId;
         $this->showDeleteModal = true;
     }
 
-    public function deleteProduct()
+    public function deleteProduct(ProductService $productService)
     {
-        $product = Product::find($this->productId);
-        if ($product) {
-            // Hapus gambar dari storage jika ada
-            if ($product->image_path) {
-                Storage::disk('public')->delete($product->image_path);
-            }
-            $product->delete();
+        try {
+            $productService->deleteProduct($this->productId);
             session()->flash('message', 'Produk berhasil dihapus.');
+        } catch (Exception $e) {
+            session()->flash('error', 'Gagal menghapus produk: ' . $e->getMessage());
+        } finally {
+            $this->closeModal();
         }
-        $this->showDeleteModal = false;
-        $this->resetForm();
     }
 
-    private function resetForm()
-    {
-        $this->productId = null;
-        $this->name = '';
-        $this->sku = '';
-        $this->description = '';
-        $this->category_id = null;
-        $this->supplier_id = null;
-        $this->purchase_price = '';
-        $this->selling_price = '';
-        $this->low_stock_threshold = 0;
-        $this->is_active = true;
-
-        $this->newProductImage = null; // Reset properti gambar baru
-        $this->existingImagePath = null; // Reset path gambar yang ada
-        $this->resetErrorBag();
-    }
-
-    // Dipanggil saat ada file baru yang dipilih untuk newProductImage
-    public function updatedNewProductImage()
-    {
-        $this->validateOnly('newProductImage');
-    }
-
-
-    public function closeModal() // ... (tetap sama)
+    public function closeModal()
     {
         $this->showProductModal = false;
         $this->showDeleteModal = false;
         $this->resetForm();
     }
 
-
-    public function render() // ... (render Anda tetap sama, hanya pastikan $products di-pass)
+    public function render(ProductService $productService)
     {
-        $productsQuery = Product::with(['category', 'supplier'])
-            ->where(function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('sku', 'like', '%' . $this->search . '%');
-            });
+        $categoryId = $this->filterCategory ? (int)$this->filterCategory : null;
 
-        if (!empty($this->filterCategory)) {
-            $productsQuery->where('category_id', $this->filterCategory);
-        }
-
-        $products = $productsQuery->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')
-            ->paginate(10);
+        $products = $productService->getPaginatedProducts(
+            $this->search,
+            $categoryId,
+            $this->sortField,
+            $this->sortAsc
+        );
 
         return view('livewire.admin-pusat.product-management', [
             'products' => $products,

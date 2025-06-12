@@ -2,84 +2,72 @@
 
 namespace App\Livewire\AdminPusat;
 
-use Livewire\Component;
 use App\Models\User;
-use App\Models\Branch;
-use Illuminate\Support\Facades\Hash;
+use App\Services\AdminPusat\UserService;
+use Exception;
 use Illuminate\Validation\Rule;
+use Livewire\Component;
 use Livewire\WithPagination;
 
 class UserManagement extends Component
 {
     use WithPagination;
 
+    // Properti untuk UI state
     public $search = '';
     public $sortField = 'name';
     public $sortAsc = true;
-    public $filterRole = ''; // Properti baru untuk filter peran
+    public $filterRole = '';
+    public bool $showUserModal = false;
+    public bool $showDeleteModal = false;
+    public bool $isEditMode = false;
 
-    public $userId;
-    public $name;
-    public $email;
-    public $password;
-    public $password_confirmation;
-    public $role;
-    public $branch_id;
+    // Properti untuk Form
+    public ?int $userId = null;
+    public string $name = '';
+    public string $email = '';
+    public string $password = '';
+    public string $password_confirmation = '';
+    public string $role = '';
+    public ?int $branch_id = null;
 
-    public $allRoles = []; // Sudah ada, akan digunakan untuk mengisi dropdown filter
-    public $branches = [];
-
-    public $showUserModal = false;
-    public $showDeleteModal = false;
-    public $isEditMode = false;
+    // Properti untuk data dropdown
+    public array $allRoles = [];
+    public $branches; // Akan diisi dengan koleksi
 
     protected $paginationTheme = 'tailwind';
 
     protected function rules()
     {
-        // ... (rules Anda tetap sama)
         return [
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->userId)],
             'password' => $this->isEditMode && !$this->password ? 'nullable' : ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', Rule::in(array_keys($this->allRoles))],
             'branch_id' => [
-                Rule::requiredIf(function () {
-                    return in_array($this->role, [User::ROLE_ADMIN_CABANG, User::ROLE_MANAJER_CABANG, User::ROLE_KASIR]);
-                }),
                 'nullable',
-                Rule::exists('branches', 'id')->when(function () {
-                     return in_array($this->role, [User::ROLE_ADMIN_CABANG, User::ROLE_MANAJER_CABANG, User::ROLE_KASIR]);
-                }, function ($query) {
-                    return $query;
-                }),
+                // PERBAIKAN: Memanggil metode lokal untuk konsistensi.
+                Rule::requiredIf(fn() => $this->shouldShowBranchField()),
+                Rule::exists('branches', 'id'),
             ],
         ];
     }
 
     public function messages()
     {
-        // ... (messages Anda tetap sama)
         return [
             'branch_id.required' => 'Cabang wajib diisi untuk peran ini.',
         ];
     }
 
-    public function mount()
+    public function mount(UserService $userService)
     {
-        $this->allRoles = [
-            User::ROLE_ADMIN_PUSAT => 'Admin Pusat',
-            User::ROLE_ADMIN_CABANG => 'Admin Cabang',
-            User::ROLE_MANAJER_PUSAT => 'Manajer Pusat',
-            User::ROLE_MANAJER_CABANG => 'Manajer Cabang',
-            User::ROLE_KASIR => 'Kasir',
-        ];
-        $this->branches = Branch::orderBy('name')->get();
+        $this->allRoles = $userService->getAvailableRoles();
+        $this->branches = $userService->getAllBranches();
     }
 
     public function sortBy($field)
     {
-        // ... (sortBy Anda tetap sama)
         if ($this->sortField === $field) {
             $this->sortAsc = !$this->sortAsc;
         } else {
@@ -90,15 +78,11 @@ class UserManagement extends Component
 
     public function updatedRole($value)
     {
-        // ... (updatedRole Anda tetap sama)
-        if (in_array($value, [User::ROLE_ADMIN_PUSAT, User::ROLE_MANAJER_PUSAT])) {
+        if (!(new UserService())->isBranchAssociatedRole($value)) {
             $this->branch_id = null;
         }
     }
 
-    // Metode untuk mereset paginasi saat filter berubah
-    // Livewire 3 biasanya menangani ini secara otomatis untuk `wire:model.live`
-    // Namun, menambahkannya secara eksplisit tidak ada salahnya
     public function updatingSearch()
     {
         $this->resetPage();
@@ -109,36 +93,20 @@ class UserManagement extends Component
         $this->resetPage();
     }
 
-
-    public function addUser()
+    private function resetForm()
     {
-        // ... (addUser Anda tetap sama)
-        $this->resetForm();
-        $this->isEditMode = false;
-        $this->showUserModal = true;
+        $this->reset(['userId', 'name', 'email', 'password', 'password_confirmation', 'role', 'branch_id', 'isEditMode']);
+        $this->resetErrorBag();
     }
 
-    public function createUser()
+    public function openUserModal()
     {
-        // ... (createUser Anda tetap sama)
-        $this->validate();
-
-        User::create([
-            'name' => $this->name,
-            'email' => $this->email,
-            'password' => Hash::make($this->password),
-            'role' => $this->role,
-            'branch_id' => $this->isBranchAssociatedRole($this->role) ? $this->branch_id : null,
-        ]);
-
-        $this->showUserModal = false;
-        session()->flash('message', 'Pengguna berhasil ditambahkan.');
         $this->resetForm();
+        $this->showUserModal = true;
     }
 
     public function editUser(User $user)
     {
-        // ... (editUser Anda tetap sama)
         $this->resetForm();
         $this->isEditMode = true;
         $this->userId = $user->id;
@@ -149,92 +117,66 @@ class UserManagement extends Component
         $this->showUserModal = true;
     }
 
-    public function updateUser()
+    public function confirmDelete(int $userId)
     {
-        // ... (updateUser Anda tetap sama)
-        $this->validate();
-
-        $user = User::find($this->userId);
-        if ($user) {
-            $userData = [
-                'name' => $this->name,
-                'email' => $this->email,
-                'role' => $this->role,
-                'branch_id' => $this->isBranchAssociatedRole($this->role) ? $this->branch_id : null,
-            ];
-
-            if (!empty($this->password)) {
-                $userData['password'] = Hash::make($this->password);
-            }
-
-            $user->update($userData);
-            $this->showUserModal = false;
-            session()->flash('message', 'Pengguna berhasil diperbarui.');
-            $this->resetForm();
-        }
-    }
-
-    public function confirmDelete($userId)
-    {
-        // ... (confirmDelete Anda tetap sama)
         $this->userId = $userId;
         $this->showDeleteModal = true;
     }
 
-    public function deleteUser()
-    {
-        // ... (deleteUser Anda tetap sama)
-        $user = User::find($this->userId);
-        if ($user) {
-            $user->delete();
-            session()->flash('message', 'Pengguna berhasil dihapus.');
-        }
-        $this->showDeleteModal = false;
-        $this->resetForm();
-    }
-
-    private function resetForm()
-    {
-        // ... (resetForm Anda tetap sama)
-        $this->userId = null;
-        $this->name = '';
-        $this->email = '';
-        $this->password = '';
-        $this->password_confirmation = '';
-        $this->role = '';
-        $this->branch_id = null;
-        $this->resetErrorBag();
-    }
-
-    private function isBranchAssociatedRole($role)
-    {
-        // ... (isBranchAssociatedRole Anda tetap sama)
-        return in_array($role, [User::ROLE_ADMIN_CABANG, User::ROLE_MANAJER_CABANG, User::ROLE_KASIR]);
-    }
-
     public function closeModal()
     {
-        // ... (closeModal Anda tetap sama)
         $this->showUserModal = false;
         $this->showDeleteModal = false;
         $this->resetForm();
     }
 
-    public function render()
+    public function saveUser(UserService $userService)
     {
-        $usersQuery = User::with('branch')
-            ->where(function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%');
-            });
+        $validatedData = $this->validate();
 
-        // Terapkan filter peran jika dipilih
-        if (!empty($this->filterRole)) {
-            $usersQuery->where('role', $this->filterRole);
+        try {
+            if ($this->isEditMode) {
+                $userService->updateUser($this->userId, $validatedData);
+                session()->flash('message', 'Data pengguna berhasil diperbarui.');
+            } else {
+                $userService->createUser($validatedData);
+                session()->flash('message', 'Pengguna baru berhasil ditambahkan.');
+            }
+            $this->closeModal();
+        } catch (Exception $e) {
+            session()->flash('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
         }
+    }
 
-        $users = $usersQuery->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')
-            ->paginate(10);
+    public function deleteUser(UserService $userService)
+    {
+        try {
+            $userService->deleteUser($this->userId);
+            session()->flash('message', 'Pengguna berhasil dihapus.');
+        } catch (Exception $e) {
+            session()->flash('error', 'Gagal menghapus pengguna: ' . $e->getMessage());
+        } finally {
+            $this->closeModal();
+        }
+    }
+
+    /**
+     * Metode publik untuk memeriksa apakah dropdown cabang harus ditampilkan.
+     * Dapat dipanggil dari file view Blade.
+     */
+    public function shouldShowBranchField(): bool
+    {
+        return (new UserService())->isBranchAssociatedRole($this->role);
+    }
+
+    public function render(UserService $userService)
+    {
+        $users = $userService->getPaginatedUsers(
+            $this->search,
+            $this->filterRole,
+            $this->sortField,
+            $this->sortAsc
+        );
 
         return view('livewire.admin-pusat.user-management', [
             'users' => $users,
