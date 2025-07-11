@@ -50,8 +50,7 @@
                             @enderror
                         </div>
                         <div>
-                            <label for="invoice_number" class="block text-sm font-medium text-gray-700">Nomor Invoice
-                                (Opsional)</label>
+                            <label for="invoice_number" class="block text-sm font-medium text-gray-700">Nomor Invoice <span class="text-red-500">*</span></label>
                             <input type="text" id="invoice_number" wire:model.lazy="invoice_number"
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>

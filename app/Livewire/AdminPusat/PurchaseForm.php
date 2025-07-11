@@ -47,7 +47,13 @@ class PurchaseForm extends Component
         ];
     }
 
-    
+    /**
+     * Tambah baris produk baru ke dalam formulir.
+     */
+    public function addProduct()
+    {
+        $this->orderProducts[] = $this->newProductRow();
+    }
 
     public function savePurchase()
     {
@@ -55,6 +61,17 @@ class PurchaseForm extends Component
         $this->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'purchase_date' => 'required|date',
+            'invoice_number' => 'required|string|max:255|unique:purchases,invoice_number', // Tambahkan validasi ini
+            // Tambahan validasi untuk orderProducts jika belum ada
+            'orderProducts.*.product_id' => 'nullable|exists:products,id',
+            'orderProducts.*.is_new_product' => 'boolean',
+            'orderProducts.*.product_name' => 'required_if:orderProducts.*.is_new_product,true|string|max:255',
+            'orderProducts.*.category_id' => 'required_if:orderProducts.*.is_new_product,true|exists:categories,id',
+            'orderProducts.*.selling_price' => 'required|numeric|min:0',
+            'orderProducts.*.sku' => 'nullable|string|max:255',
+            'orderProducts.*.description' => 'nullable|string|max:1000',
+            'orderProducts.*.quantity_ordered' => 'required|integer|min:1',
+            'orderProducts.*.unit_price' => 'required|numeric|min:0',
         ]);
 
         try {
@@ -70,9 +87,10 @@ class PurchaseForm extends Component
                 // 1. Buat record di tabel purchases (tanpa branch_id)
                 $purchase = Purchase::create([
                     'supplier_id' => $this->supplier_id,
-                    // 'branch_id' => 1, // <-- DIHAPUS
+                    // 'branch_id' => 1, // <-- Tidak dihapus, karena memang tidak ada di sini lagi setelah migrasi.
+                    //     Stok tetap akan masuk ke branch_id 1
                     'user_id' => Auth::id(),
-                    'invoice_number' => $this->invoice_number,
+                    'invoice_number' => $this->invoice_number, // Akan divalidasi tidak kosong/duplikat
                     'purchase_date' => $this->purchase_date,
                     'expected_delivery_date' => $this->expected_delivery_date,
                     'total_amount' => $totalAmount,
@@ -111,7 +129,7 @@ class PurchaseForm extends Component
                     ]);
 
                     Stock::updateOrCreate(
-                        ['product_id' => $productModel->id, 'branch_id' => 1], // Selalu ke branch_id 1
+                        ['product_id' => $productModel->id, 'branch_id' => 1], // Selalu ke branch_id 1, sesuai yang Anda inginkan
                         ['quantity' => DB::raw('quantity + ' . $productData['quantity_ordered']), 'last_restock_date' => now()]
                     );
                 }
